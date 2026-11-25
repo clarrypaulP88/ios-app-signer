@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="referrer" content="no-referrer">
+<meta name="dash-token" content="__DASH_TOKEN__">
+<title>Deco Wi-Fi Dashboard</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230a84ff'/%3E%3Cpath d='M6 13a14 14 0 0 1 20 0M9.5 16.5a9 9 0 0 1 13 0M13 20a4 4 0 0 1 6 0' stroke='%23fff' stroke-width='2.4' fill='none' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='24' r='2' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/static/style.css">
+<script src="/static/app.js" defer></script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to the dashboard</a>
+
+<div id="demo-banner" class="demo-banner" role="alert" hidden>
+  <strong>DEMO, sample data, not your network.</strong>
+  <span>Everything here is made up so you can look around. Start without <code>--demo</code> to see your own Wi-Fi.</span>
+</div>
+
+<header class="topbar">
+  <div class="brand">
+    <svg class="logo" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+      <rect width="32" height="32" rx="8" class="logo-bg"></rect>
+      <path d="M6 13a14 14 0 0 1 20 0M9.5 16.5a9 9 0 0 1 13 0M13 20a4 4 0 0 1 6 0" class="logo-waves"></path>
+      <circle cx="16" cy="24" r="2" class="logo-dot"></circle>
+    </svg>
+    <div>
+      <h1>Deco Wi-Fi Dashboard</h1>
+      <p class="subtitle">Find out what slows your Wi-Fi down, and how to fix it. <span id="version" class="version"></span></p>
+    </div>
+  </div>
+  <span id="conn-pill" class="pill">Loading…</span>
+</header>
+
+<div id="message" class="message" role="status" aria-live="polite" hidden></div>
+
+<main id="main">
+  <section class="card hero" aria-labelledby="hero-title">
+    <div class="ring-wrap">
+      <svg id="score-ring" class="ring" viewBox="0 0 120 120" role="img" aria-labelledby="ring-label">
+        <title id="ring-label">Wi-Fi score</title>
+        <circle class="ring-track" cx="60" cy="60" r="52"></circle>
+        <circle id="ring-value" class="ring-value" cx="60" cy="60" r="52" transform="rotate(-90 60 60)" stroke-dasharray="326.73" stroke-dashoffset="326.73"></circle>
+      </svg>
+      <div class="ring-text">
+        <span id="score-grade" class="ring-grade">?</span>
+        <span id="score-num" class="ring-num">no score yet</span>
+      </div>
+    </div>
+    <div class="hero-body">
+      <h2 id="hero-title">Your Wi-Fi score</h2>
+      <p id="headline" class="headline">Loading…</p>
+      <p id="analysis-error" class="note warn" hidden></p>
+      <div class="chips">
+        <span id="bottleneck-chip" class="chip"></span>
+      </div>
+      <div id="coverage-chips" class="chips" aria-label="What has been measured"></div>
+      <div class="actions">
+        <button id="btn-full" type="button" class="btn primary">Run full check</button>
+        <button id="btn-quick" type="button" class="btn">Quick check</button>
+      </div>
+      <p class="hint">Quick check reads your Deco, this computer's Wi-Fi, ping and DNS (about 20 seconds). Full check also runs an internet speed test (about 20 seconds more). It uses a few hundred MB of data, up to about 1 GB on a very fast plan.</p>
+      <div id="jobs" class="jobs" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <div class="grid">
+    <section class="card" id="card-connect" aria-labelledby="connect-title">
+      <h2 id="connect-title">Connect to Deco</h2>
+      <p id="connect-status" class="status-line"></p>
+      <form id="login-form" autocomplete="off" novalidate>
+        <label for="deco-host">Main Deco address</label>
+        <input id="deco-host" name="host" type="text" value="192.168.68.1" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="270">
+        <label for="deco-password">Deco owner password</label>
+        <input id="deco-password" name="password" type="password" autocomplete="off" maxlength="512">
+        <div class="actions">
+          <button id="btn-login" type="submit" class="btn primary">Connect</button>
+        </div>
+      </form>
+      <div id="connected-box" class="actions" hidden>
+        <button id="btn-refresh-deco" type="button" class="btn">Read Deco again</button>
+        <button id="btn-logout" type="button" class="btn">Disconnect</button>
+      </div>
+      <p id="login-error" class="note error" role="alert" hidden></p>
+      <ul class="notes">
+        <li>It needs the Deco <strong>owner</strong> password: the TP-Link ID password you use in the Deco app. Manager accounts can't log in here.</li>
+        <li>Connecting logs the owner out of the Deco app on their phone, because a Deco only allows one owner login at a time. Just log in on the app again afterwards (or press Disconnect first).</li>
+        <li>Your password is never saved. It stays in this computer's memory and is gone when you disconnect or stop the dashboard.</li>
+      </ul>
+    </section>
+
+    <section class="card" id="card-settings" aria-labelledby="settings-title">
+      <h2 id="settings-title">Settings</h2>
+      <form id="settings-form" novalidate>
+        <div class="two-col">
+          <div>
+            <label for="plan-down">Plan download (Mbps)</label>
+            <input id="plan-down" type="number" min="1" max="100000" step="any" inputmode="decimal" placeholder="e.g. 500">
+          </div>
+          <div>
+            <label for="plan-up">Plan upload (Mbps)</label>
+            <input id="plan-up" type="number" min="1" max="100000" step="any" inputmode="decimal" placeholder="e.g. 50">
+          </div>
+        </div>
+        <label for="room-name">Room you're in now</label>
+        <input id="room-name" type="text" maxlength="60" placeholder="e.g. Bedroom" autocomplete="off">
+        <div class="actions">
+          <button id="btn-save-settings" type="submit" class="btn">Save settings</button>
+        </div>
+      </form>
+      <p class="hint">Your plan speed is on your internet bill or in your provider's app. We use it to check if you get what you pay for. Mbps means megabits per second.</p>
+    </section>
+
+    <section class="card span-2" id="card-findings" aria-labelledby="findings-title">
+      <h2 id="findings-title">Fix these first</h2>
+      <p class="hint">Sorted with the most important first. Tap one to see how to fix it.</p>
+      <div id="findings"></div>
+    </section>
+
+    <section class="card" id="card-internet" aria-labelledby="internet-title">
+      <h2 id="internet-title">Internet</h2>
+      <div id="internet"></div>
+    </section>
+
+    <section class="card" id="card-computer" aria-labelledby="computer-title">
+      <h2 id="computer-title">This computer</h2>
+      <div id="computer"></div>
+    </section>
+
+    <section class="card span-2" id="card-mesh" aria-labelledby="mesh-title">
+      <h2 id="mesh-title">Mesh (your Decos)</h2>
+      <div id="mesh"></div>
+    </section>
+
+    <section class="card span-2" id="card-devices" aria-labelledby="devices-title">
+      <h2 id="devices-title">Devices</h2>
+      <div id="devices-summary"></div>
+      <label for="device-filter" class="visually-hidden">Filter devices</label>
+      <input id="device-filter" type="search" placeholder="Filter by name, IP, band or Deco" autocomplete="off" spellcheck="false">
+      <div id="devices-table"></div>
+    </section>
+
+    <section class="card" id="card-wifi" aria-labelledby="wifi-title">
+      <h2 id="wifi-title">Wi-Fi settings</h2>
+      <div id="wifi"></div>
+    </section>
+
+    <section class="card" id="card-wan" aria-labelledby="wan-title">
+      <h2 id="wan-title">Internet connection</h2>
+      <div id="wan"></div>
+    </section>
+
+    <section class="card span-2" id="card-checklist" aria-labelledby="checklist-title">
+      <h2 id="checklist-title">Optimal setup checklist</h2>
+      <p class="hint"><span class="legend-icon st-pass" aria-hidden="true">✓</span> done <span class="legend-icon st-fail" aria-hidden="true">✕</span> needs a change <span class="legend-icon st-unknown" aria-hidden="true">?</span> can't tell yet <span class="legend-icon st-manual" aria-hidden="true">→</span> check it yourself in the Deco app</p>
+      <ul id="checklist" class="checklist"></ul>
+    </section>
+
+    <section class="card span-2" id="card-rooms" aria-labelledby="rooms-title">
+      <h2 id="rooms-title">Room tests</h2>
+      <p class="hint">Take your laptop to a room, type the room's name and press the button. It takes about 30 seconds. Test 3 or 4 rooms to find the weak spots.</p>
+      <form id="room-form" class="inline-form" novalidate>
+        <label for="room-test-name" class="visually-hidden">Room name</label>
+        <input id="room-test-name" type="text" maxlength="60" placeholder="Room name, e.g. Kitchen" autocomplete="off">
+        <button id="btn-room" type="submit" class="btn primary">Test this room</button>
+      </form>
+      <div id="rooms-chart"></div>
+      <div id="rooms-table"></div>
+      <div class="actions">
+        <button id="btn-clear-history" type="button" class="btn danger small">Clear room history</button>
+      </div>
+    </section>
+
+    <section class="card span-2" id="card-raw" aria-labelledby="raw-title">
+      <h2 id="raw-title">Raw data</h2>
+      <p class="hint">Everything the dashboard knows, with passwords removed. Handy if someone is helping you.</p>
+      <details id="raw-details">
+        <summary>Show the raw JSON</summary>
+        <pre id="raw-json" class="raw" tabindex="0"></pre>
+      </details>
+      <div class="actions">
+        <button id="btn-export" type="button" class="btn">Export JSON</button>
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer class="footer">
+  <p><strong>Read-only: this tool never changes your Deco settings.</strong></p>
+  <p>Everything stays on this computer.</p>
+</footer>
+
+<noscript><p class="noscript">This dashboard needs JavaScript turned on.</p></noscript>
+</body>
+</html>
